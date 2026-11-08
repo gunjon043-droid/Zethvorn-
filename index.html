@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>ZethVorn — Web Design</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root { --white:#fff; --grey:#888; --dark:#1a1a1a; --black:#000; }
+  html { scroll-behavior: smooth; }
+  body { background:#000; color:#fff; font-family:'Cormorant Garamond',serif; overflow-x:hidden; cursor:none; }
+
+  /* ── LOADER ── */
+  #loader {
+    position: fixed; inset: 0; background: #000; z-index: 99999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: opacity 0.8s ease, visibility 0.8s ease;
+  }
+  #loader.hide { opacity: 0; visibility: hidden; }
+
+  .loader-logo {
+    width: 120px; height: auto; margin-bottom: 1.5rem;
+    animation: loaderPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes loaderPulse {
+    0%,100% { filter: brightness(.85); transform: scale(1); }
+    50%      { filter: brightness(1.2); transform: scale(1.05); }
+  }
+
+  .loader-bar-wrap {
+    width: 220px; height: 1px; background: #1a1a1a; position: relative; overflow: hidden;
+  }
+  .loader-bar {
+    height: 100%; background: #fff; width: 0%;
+    transition: width 0.05s linear;
+    box-shadow: 0 0 8px rgba(255,255,255,0.8);
+  }
+
+  .loader-pct {
+    font-family: 'Space Mono', monospace; font-size: 0.65rem;
+    letter-spacing: 0.3em; color: #a0a0a0; margin-top: 1.2rem;
+  }
+  .loader-word {
+    font-family: 'Bebas Neue', sans-serif; font-size: 0.9rem;
+    letter-spacing: 0.5em; color: #b5b5b5; margin-top: 0.6rem;
+    min-height: 1.2em;
+  }
+
+  /* ── CURSOR ── */
+  .cursor {
+    position:fixed; width:8px; height:8px; background:#fff; border-radius:50%;
+    pointer-events:none; z-index:9999; transform:translate(-50%,-50%);
+    transition:width .3s,height .3s; mix-blend-mode:difference;
+  }
+  .cursor-ring {
+    position:fixed; width:36px; height:36px; border:1px solid rgba(255,255,255,.5);
+    border-radius:50%; pointer-events:none; z-index:9998; transform:translate(-50%,-50%);
+    mix-blend-mode:difference;
+  }
+
+  /* ── NOISE ── */
+  body::before {
+    content:''; position:fixed; inset:0;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity:.03; pointer-events:none; z-index:1000;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    padding:2rem 4rem; display:flex; justify-content:space-between; align-items:center;
+  }
+  .nav-logo {
+    font-family:'Bebas Neue',sans-serif; font-size:1.6rem; letter-spacing:.3em;
+    color:#fff; text-decoration:none; opacity:0; animation:fadeDown 1s ease .3s forwards;
+  }
+  .nav-links { display:flex; gap:3rem; list-style:none; opacity:0; animation:fadeDown 1s ease .5s forwards; }
+  .nav-links a {
+    font-family:'Space Mono',monospace; font-size:.8rem; font-weight:700; letter-spacing:.2em;
+    color:#fff; text-decoration:none; text-transform:uppercase; transition:color .3s, opacity .3s; position:relative;
+  }
+  .nav-links a::after {
+    content:''; position:absolute; bottom:-4px; left:0; width:0; height:1px;
+    background:#fff; transition:width .3s;
+  }
+  .nav-links a:hover { color:#fff; opacity:.75; }
+  .nav-links a:hover::after { width:100%; }
+
+  /* hide nav on scroll down, show on scroll up */
+  nav { transition:transform .45s cubic-bezier(.16,1,.3,1); }
+  nav.nav-hidden { transform:translateY(-110%); }
+  @media(min-width:769px){
+    nav::before { content:''; position:absolute; inset:0; z-index:-1; background:rgba(0,0,0,.85); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); border-bottom:1px solid #111; opacity:0; transition:opacity .4s; }
+    nav.scrolled::before { opacity:1; }
+  }
+
+  /* logo PNG has a black background: "screen" blend makes it vanish on the black page */
+  .zv-logo { aspect-ratio:1/1; object-fit:contain; mix-blend-mode:screen; }
+
+  .nav-toggle { display:none; }
+
+  /* ── HERO ── */
+  .hero {
+    min-height:100vh; min-height:100svh; display:flex; flex-direction:column; justify-content:center;
+    align-items:center; position:relative; padding:2rem; text-align:center; overflow:hidden;
+  }
+  .hero-bg-lines { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+  .hero-bg-lines::before, .hero-bg-lines::after {
+    content:''; position:absolute; border:1px solid rgba(255,255,255,.04);
+    border-radius:50%; top:50%; left:50%; transform:translate(-50%,-50%);
+    animation:pulseRing 8s ease-in-out infinite;
+  }
+  .hero-bg-lines::before { width:600px; height:600px; }
+  .hero-bg-lines::after  { width:900px; height:900px; animation-delay:2s; }
+  @keyframes pulseRing {
+    0%,100% { opacity:.3; transform:translate(-50%,-50%) scale(1); }
+    50%      { opacity:.08; transform:translate(-50%,-50%) scale(1.05); }
+  }
+  .hero-logo {
+    width:180px; height:180px; object-fit:contain; margin-bottom:.5rem; opacity:0;
+    animation:logoReveal 1.5s cubic-bezier(.16,1,.3,1) .2s forwards, floatLogo 6s ease-in-out 1.9s infinite;
+  }
+  @keyframes logoReveal {
+    0%   { opacity:0; transform:scale(.8) rotate(-10deg); }
+    100% { opacity:1; transform:scale(1) rotate(0deg); }
+  }
+  .hero-eyebrow {
+    font-family:'Space Mono',monospace; font-size:.65rem; letter-spacing:.4em;
+    color:#b0b0b0; text-transform:uppercase; margin-bottom:1.5rem;
+    opacity:0; animation:fadeUp 1s ease .8s forwards;
+  }
+  .hero-title {
+    font-family:'Bebas Neue',sans-serif; font-size:clamp(5rem,15vw,14rem);
+    line-height:.9; letter-spacing:.05em; opacity:0; animation:fadeUp 1s ease 1s forwards;
+  }
+  .hero-title span {
+    display:block;
+    background:linear-gradient(180deg,#fff 0%,#444 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  }
+  .hero-sub {
+    font-style:italic; font-size:clamp(1rem,2vw,1.4rem); font-weight:500; color:#cfcfcf;
+    margin-top:2rem; letter-spacing:.05em; opacity:0; animation:fadeUp 1s ease 1.2s forwards;
+  }
+  .hero-cta { margin-top:4rem; opacity:0; animation:fadeUp 1s ease 1.5s forwards; }
+  .btn {
+    display:inline-block; font-family:'Space Mono',monospace; font-size:.7rem;
+    letter-spacing:.25em; text-transform:uppercase; color:#000; background:#fff;
+    padding:1rem 2.5rem; text-decoration:none; position:relative; overflow:hidden; transition:color .4s;
+  }
+  .btn::before {
+    content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
+    background:#000; transition:left .4s cubic-bezier(.16,1,.3,1); z-index:0;
+  }
+  .btn:hover { color:#fff; }
+  .btn:hover::before { left:0; }
+  .btn span { position:relative; z-index:1; }
+  .btn-ghost { background:transparent; color:#fff; border:1px solid #777; margin-left:1.5rem; }
+  .btn-ghost::before { background:#fff; }
+  .btn-ghost:hover { color:#000; border-color:#fff; }
+
+  .hero-scroll {
+    position:absolute; bottom:3rem; left:50%; transform:translateX(-50%);
+    display:flex; flex-direction:column; align-items:center; gap:.5rem;
+    opacity:0; animation:fadeIn 1s ease 2.5s forwards;
+  }
+  .hero-scroll span { font-family:'Space Mono',monospace; font-size:.55rem; letter-spacing:.3em; color:#a0a0a0; text-transform:uppercase; }
+  .scroll-line { width:1px; height:50px; background:linear-gradient(180deg,#fff,transparent); animation:scrollDown 2s ease infinite; }
+  @keyframes scrollDown {
+    0%  { transform:scaleY(0); transform-origin:top; }
+    50% { transform:scaleY(1); transform-origin:top; }
+    51% { transform:scaleY(1); transform-origin:bottom; }
+    100%{ transform:scaleY(0); transform-origin:bottom; }
+  }
+
+  /* ── MARQUEE ── */
+  .marquee-section { border-top:1px solid #111; border-bottom:1px solid #111; padding:1.2rem 0; overflow:hidden; }
+  .marquee-track { display:flex; gap:0; animation:marquee 20s linear infinite; white-space:nowrap; }
+  .marquee-item { font-family:'Bebas Neue',sans-serif; font-size:.85rem; letter-spacing:.4em; color:#9a9a9a; padding:0 3rem; flex-shrink:0; }
+  .marquee-item.accent { color:#e0e0e0; }
+  @keyframes marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+
+  /* ── SECTION COMMONS ── */
+  .section-label { font-family:'Space Mono',monospace; font-size:.6rem; letter-spacing:.4em; color:#a8a8a8; text-transform:uppercase; margin-bottom:1rem; }
+  .reveal { opacity:0; transform:translateY(40px); transition:opacity .8s ease,transform .8s cubic-bezier(.16,1,.3,1); }
+  .reveal.visible { opacity:1; transform:translateY(0); }
+
+  /* ── SERVICES ── */
+  .services { padding:10rem 4rem; max-width:1400px; margin:0 auto; }
+  .services-header { display:grid; grid-template-columns:1fr 1fr; gap:4rem; align-items:end; margin-bottom:6rem; }
+  .services-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(3rem,6vw,6rem); line-height:1; letter-spacing:.05em; background:linear-gradient(135deg,#fff 0%,#333 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .services-desc { font-size:1.1rem; font-weight:500; color:#fff; line-height:1.8; font-style:italic; }
+  .services-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:#111; border:1px solid #111; }
+  .service-card { background:#000; padding:3rem 2.5rem; position:relative; overflow:hidden; transition:background .4s; cursor:none; }
+  .service-card::before { content:''; position:absolute; top:0; left:0; width:100%; height:1px; background:linear-gradient(90deg,transparent,#fff,transparent); transform:scaleX(0); transition:transform .6s cubic-bezier(.16,1,.3,1); }
+  .service-card:hover::before { transform:scaleX(1); }
+  .service-card:hover { background:#0a0a0a; }
+  .service-num { font-family:'Space Mono',monospace; font-size:.6rem; letter-spacing:.3em; color:#fff; margin-bottom:2rem; }
+  .service-title-card { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:.1em; color:#fff; margin-bottom:1.2rem; }
+  .service-desc { font-size:.95rem; font-weight:500; color:#fff; line-height:1.9; font-style:italic; }
+  .service-arrow { margin-top:2.5rem; font-family:'Space Mono',monospace; font-size:.65rem; letter-spacing:.2em; color:#fff; display:flex; align-items:center; gap:.8rem; transition:color .3s,gap .3s; }
+  .service-arrow::after { content:'→'; transition:transform .3s; }
+  .service-card:hover .service-arrow { color:#fff; gap:1.2rem; }
+
+  /* ── PORTFOLIO ── */
+  .portfolio { padding:8rem 4rem; background:#040404; border-top:1px solid #111; }
+  .portfolio-inner { max-width:1400px; margin:0 auto; }
+  .portfolio-header { margin-bottom:5rem; display:flex; justify-content:space-between; align-items:flex-end; }
+  .portfolio-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(3rem,6vw,6rem); line-height:1; letter-spacing:.05em; background:linear-gradient(135deg,#fff 0%,#333 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .portfolio-count { font-family:'Space Mono',monospace; font-size:.6rem; letter-spacing:.3em; color:#a8a8a8; }
+
+  .portfolio-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1.75rem; }
+  .portfolio-item {
+    position:relative; overflow:hidden; cursor:none;
+    aspect-ratio:16/10; background:#0a0a0a;
+  }
+  .portfolio-item:nth-child(1) { grid-column:1/2; grid-row:1/2; }
+  .portfolio-item:nth-child(2) { grid-column:2/3; grid-row:1/3; aspect-ratio:auto; min-height:500px; }
+  .portfolio-item:nth-child(3) { grid-column:1/2; grid-row:2/3; }
+
+  .portfolio-mockup { width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
+  .portfolio-mockup svg { width:100%; height:100%; }
+
+  .portfolio-overlay {
+    position:absolute; inset:0; background:rgba(0,0,0,.7);
+    display:flex; flex-direction:column; justify-content:flex-end; padding:2rem;
+    opacity:0; transition:opacity .4s ease;
+  }
+  .portfolio-item:hover .portfolio-overlay { opacity:1; }
+
+  .portfolio-tag {
+    font-family:'Space Mono',monospace; font-size:.55rem; letter-spacing:.3em;
+    color:#d0d0d0; text-transform:uppercase; margin-bottom:.6rem;
+  }
+  .portfolio-name { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:.1em; color:#fff; }
+  .portfolio-type { font-size:.9rem; color:#c4c4c4; font-style:italic; margin-top:.3rem; }
+
+  /* extra items below */
+  .portfolio-row2 { display:grid; grid-template-columns:repeat(3,1fr); gap:1.75rem; margin-top:1.75rem; }
+  .portfolio-row2-item { position:relative; overflow:hidden; cursor:none; aspect-ratio:4/3; background:#0a0a0a; }
+  .portfolio-row2-item .portfolio-overlay { padding:1.5rem; }
+  .portfolio-row2-item .portfolio-name { font-size:1.5rem; }
+
+  /* ── PROCESS ── */
+  .process { padding:8rem 4rem; background:#050505; border-top:1px solid #111; }
+  .process-inner { max-width:1400px; margin:0 auto; }
+  .process-header { margin-bottom:5rem; }
+  .process-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(2.5rem,5vw,5rem); letter-spacing:.05em; background:linear-gradient(135deg,#fff 0%,#333 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .process-steps { display:grid; grid-template-columns:repeat(4,1fr); gap:3rem; }
+  .process-step { position:relative; padding-top:2rem; }
+  .process-step::before { content:''; position:absolute; top:0; left:0; width:100%; height:1px; background:#222; }
+  .process-step-num { font-family:'Bebas Neue',sans-serif; font-size:4rem; color:#8c8c8c; line-height:1; margin-bottom:1rem; }
+  .process-step-title { font-family:'Space Mono',monospace; font-size:.75rem; letter-spacing:.2em; color:#fff; text-transform:uppercase; margin-bottom:1rem; }
+  .process-step-desc { font-size:1.15rem; color:#f2f2f2; line-height:1.7; font-style:normal; font-weight:500; }
+
+  /* ── WHY ── */
+  .why { padding:10rem 4rem; max-width:1400px; margin:0 auto; }
+  .why-grid { display:grid; grid-template-columns:1fr 1fr; gap:8rem; align-items:center; }
+  .why-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(3rem,5vw,5rem); letter-spacing:.05em; line-height:1; background:linear-gradient(135deg,#fff 0%,#333 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:2rem; }
+  .why-text { font-size:1.1rem; color:#c4c4c4; line-height:1.9; font-weight:500; font-style:italic; margin-bottom:3rem; }
+  .why-stats { display:grid; grid-template-columns:1fr 1fr; gap:2rem; }
+  .stat { border-top:1px solid #1a1a1a; padding-top:1.5rem; }
+  .stat-num { font-family:'Bebas Neue',sans-serif; font-size:3rem; color:#fff; line-height:1; }
+  .stat-label { font-family:'Space Mono',monospace; font-size:.6rem; letter-spacing:.2em; color:#b0b0b0; text-transform:uppercase; margin-top:.5rem; }
+  .why-visual { position:relative; height:500px; display:flex; align-items:center; justify-content:center; }
+  .why-visual-ring { position:absolute; border-radius:50%; border:1px solid rgba(255,255,255,.06); animation:rotateRing 20s linear infinite; }
+  .why-visual-ring:nth-child(1){width:300px;height:300px;animation-duration:15s}
+  .why-visual-ring:nth-child(2){width:400px;height:400px;animation-duration:25s;animation-direction:reverse}
+  .why-visual-ring:nth-child(3){width:480px;height:480px;animation-duration:35s}
+  @keyframes rotateRing { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+  .why-visual-center { width:200px;height:200px;background:#000;border:1px solid #222;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;z-index:2; }
+  .why-logo { width:130px;height:auto;animation:floatLogo 4s ease-in-out infinite; }
+  @keyframes floatLogo { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+
+  /* ── CTA ── */
+  .cta-section { padding:10rem 4rem; border-top:1px solid #111; text-align:center; position:relative; overflow:hidden; }
+  .cta-section::before { content:'ZETHVORN'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-family:'Bebas Neue',sans-serif; font-size:20vw; color:transparent; -webkit-text-stroke:1px rgba(255,255,255,.03); pointer-events:none; white-space:nowrap; }
+  .cta-label { font-family:'Space Mono',monospace; font-size:.6rem; letter-spacing:.5em; color:#a8a8a8; text-transform:uppercase; margin-bottom:2rem; }
+  .cta-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(3rem,8vw,8rem); letter-spacing:.05em; line-height:1; background:linear-gradient(180deg,#fff 0%,#444 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:1.5rem; position:relative; z-index:2; }
+  .cta-sub { font-size:1.1rem; color:#cfcfcf; font-style:italic; font-weight:500; margin-bottom:4rem; position:relative; z-index:2; }
+  .cta-email { font-family:'Space Mono',monospace; font-size:.8rem; letter-spacing:.2em; color:#d8d8d8; display:block; margin-top:3rem; text-decoration:none; transition:color .3s; position:relative; z-index:2; }
+  .cta-email:hover{color:#fff}
+  .cta-buttons{position:relative;z-index:2}
+
+  /* ── FOOTER ── */
+  footer { border-top:1px solid #111; padding:3rem 4rem; display:flex; justify-content:space-between; align-items:center; }
+  .footer-logo { font-family:'Bebas Neue',sans-serif; font-size:1.2rem; letter-spacing:.3em; color:#d0d0d0; }
+  .footer-copy { font-family:'Space Mono',monospace; font-size:.6rem; letter-spacing:.2em; color:#a0a0a0; }
+  .footer-email { font-family:'Space Mono',monospace; font-size:.65rem; letter-spacing:.15em; color:#c8c8c8; text-decoration:none; transition:color .3s; }
+  .footer-email:hover{color:#fff}
+
+  /* ── KEYFRAMES ── */
+  @keyframes fadeUp   { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeDown { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeIn   { from{opacity:0} to{opacity:1} }
+
+
+  /* ── EXTRA MOTION (transform/opacity only, cheap) ── */
+  .progress-bar { position:fixed; top:0; left:0; right:0; height:2px; background:#fff; transform:scaleX(0); transform-origin:left; z-index:101; pointer-events:none; }
+  .btn { transition:color .4s, transform .35s cubic-bezier(.16,1,.3,1); }
+  .btn:hover { transform:translateY(-3px); }
+  .btn span { display:inline-flex; align-items:center; }
+  .btn svg { width:15px; height:15px; margin-right:.7rem; flex-shrink:0; transition:transform .45s cubic-bezier(.16,1,.3,1); }
+  .btn:hover svg { transform:rotate(-12deg) scale(1.2); }
+  .cta-buttons { display:flex; flex-wrap:wrap; justify-content:center; gap:1rem; }
+  .cta-buttons .btn-ghost { margin-left:0; }
+  .marquee-section:hover .marquee-track { animation-play-state:paused; }
+  .service-title-card, .service-num { transition:transform .5s cubic-bezier(.16,1,.3,1); }
+  .service-card:hover .service-title-card { transform:translateX(8px); }
+  .service-card:hover .service-num { transform:translateX(4px); }
+  .process-step::before { transform:scaleX(0); transform-origin:left; transition:transform 1.1s cubic-bezier(.16,1,.3,1) .25s; background:#333; }
+  .process-step.visible::before { transform:scaleX(1); }
+  .stat { transition:border-color .4s; }
+  .stat:hover { border-color:#fff; }
+  .portfolio-mockup { transition:transform .9s cubic-bezier(.16,1,.3,1); }
+  @media (hover:hover){
+    .portfolio-item:hover .portfolio-mockup, .portfolio-row2-item:hover .portfolio-mockup { transform:scale(1.04); }
+  }
+
+
+  /* ── PROJECTS: clear gaps, borders, always-visible names, unfold on scroll ── */
+  .portfolio-item, .portfolio-row2-item { border:1px solid #2a2a2a; }
+  .portfolio-overlay { opacity:1; background:linear-gradient(to top,rgba(0,0,0,.92) 0%,rgba(0,0,0,0) 60%); }
+  .portfolio-overlay::before { content:''; position:absolute; inset:0; background:rgba(0,0,0,.55); opacity:0; transition:opacity .4s ease; }
+  .portfolio-item:hover .portfolio-overlay::before, .portfolio-row2-item:hover .portfolio-overlay::before { opacity:1; }
+  .portfolio-overlay > * { position:relative; }
+  .unfold { opacity:0; transform:perspective(1200px) rotateX(-40deg) translateY(40px) scaleY(.85); transform-origin:top center;
+    transition:opacity .7s ease, transform 1s cubic-bezier(.16,1,.3,1); }
+  .unfold.visible { opacity:1; transform:none; }
+  .portfolio-row2-item:nth-child(2) { transition-delay:.12s; }
+  .portfolio-row2-item:nth-child(3) { transition-delay:.24s; }
+
+  /* ── RESPONSIVE ── */
+  /* touch devices: no custom cursor */
+  @media (hover:none), (pointer:coarse){
+    body, .service-card, .portfolio-item, .portfolio-row2-item { cursor:auto; }
+    .cursor, .cursor-ring { display:none; }
+    /* no hover on touch, so keep project labels visible */
+    .portfolio-overlay { opacity:1; background:linear-gradient(to top,rgba(0,0,0,.85) 0%,rgba(0,0,0,0) 55%); padding:1.2rem; }
+    .portfolio-name { font-size:1.4rem; }
+    .portfolio-type { color:#c4c4c4; font-size:.8rem; }
+  }
+
+  @media(max-width:1024px){
+    .services,.why{padding-left:2.5rem;padding-right:2.5rem}
+    .services-grid{grid-template-columns:repeat(2,1fr)}
+    .process-steps{grid-template-columns:repeat(2,1fr);gap:2.5rem}
+    .why-grid{gap:4rem}
+    nav{padding:1.75rem 2.5rem}
+    .nav-links{gap:1.8rem}
+  }
+
+  @media(max-width:768px){
+    nav{padding:calc(1.1rem + env(safe-area-inset-top,0px)) calc(1.5rem + env(safe-area-inset-right,0px)) 1.1rem calc(1.5rem + env(safe-area-inset-left,0px))}
+    nav::before{content:'';position:absolute;inset:0;z-index:0;background:rgba(0,0,0,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid #111}
+    .nav-logo{position:relative;z-index:3;font-size:1.3rem}
+
+    /* hamburger */
+    .nav-toggle{display:flex;flex-direction:column;justify-content:center;gap:6px;width:44px;height:44px;margin-right:-10px;padding:0 10px;background:none;border:0;cursor:pointer;position:relative;z-index:3;-webkit-tap-highlight-color:transparent}
+    .nav-toggle span{display:block;height:1px;background:#fff;transition:transform .35s cubic-bezier(.16,1,.3,1),opacity .2s}
+    nav.open .nav-toggle span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+    nav.open .nav-toggle span:nth-child(2){opacity:0}
+    nav.open .nav-toggle span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+    /* full-screen menu */
+    .nav-links{position:fixed;inset:0;z-index:2;flex-direction:column;align-items:center;justify-content:center;gap:2.2rem;background:rgba(0,0,0,.97);animation:none;opacity:0;visibility:hidden;transition:opacity .4s ease,visibility .4s ease}
+    nav.open .nav-links{opacity:1;visibility:visible}
+    .nav-links a{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:2.4rem;letter-spacing:.25em;color:#fff;padding:.4rem 0;display:inline-block}
+    .nav-links a::after{display:none}
+    body.menu-lock{overflow:hidden !important}
+
+    /* hero */
+    .hero{padding:6rem 1.5rem 5rem}
+    .hero-logo{width:140px;height:140px;margin-bottom:.25rem}
+    .hero-eyebrow{letter-spacing:.3em;margin-bottom:1rem}
+    .hero-title{font-size:clamp(4.5rem,24vw,8rem)}
+    .hero-sub{margin-top:1.5rem;padding:0 .5rem}
+    .hero-cta{margin-top:2.5rem;display:flex;flex-direction:column;gap:1rem;width:100%;max-width:320px}
+    .btn{text-align:center;padding:1.1rem 1.5rem}
+    .btn-ghost{margin-left:0}
+    .hero-scroll{display:none}
+    .hero-bg-lines::before{width:320px;height:320px}
+    .hero-bg-lines::after{width:520px;height:520px}
+    .marquee-item{padding:0 1.8rem}
+
+    /* sections */
+    .services,.why,.cta-section,.process,.portfolio{padding:5rem 1.5rem}
+    .services-header{grid-template-columns:1fr;gap:1.5rem;margin-bottom:3rem}
+    .services-grid{grid-template-columns:1fr}
+    .service-card{padding:2.2rem 1.6rem}
+    .service-arrow{margin-top:1.8rem}
+    .reveal{transition-delay:0s !important}
+
+    /* portfolio */
+    .portfolio-header{flex-direction:column;gap:1rem;align-items:flex-start;margin-bottom:2.5rem}
+    .portfolio-grid{grid-template-columns:1fr}
+    .portfolio-item:nth-child(1),.portfolio-item:nth-child(2),.portfolio-item:nth-child(3){grid-column:auto;grid-row:auto}
+    .portfolio-item:nth-child(2){aspect-ratio:500/380;min-height:0}
+    .portfolio-row2{grid-template-columns:1fr}
+
+    /* process */
+    .process-header{margin-bottom:3rem}
+    .process-steps{grid-template-columns:1fr;gap:2rem}
+    .process-step-num{font-size:3rem}
+
+    /* why */
+    .why-grid{grid-template-columns:1fr;gap:3rem}
+    .why-visual{height:300px;overflow:hidden}
+    .why-visual-ring:nth-child(1){width:170px;height:170px}
+    .why-visual-ring:nth-child(2){width:230px;height:230px}
+    .why-visual-ring:nth-child(3){width:285px;height:285px}
+    .why-visual-center{width:150px;height:150px}
+    .why-logo{width:100px}
+    .why-text{margin-bottom:2rem}
+    .stat-num{font-size:2.4rem}
+
+    /* cta + footer */
+    .cta-buttons{display:flex;flex-direction:column;gap:1rem;align-items:stretch;max-width:320px;margin-left:auto;margin-right:auto}
+    .cta-sub{margin-bottom:2.5rem}
+    .cta-email{margin-top:2rem;font-size:.7rem;letter-spacing:.12em}
+    footer{flex-direction:column;gap:1.2rem;text-align:center;padding:2.2rem 1.5rem calc(2.2rem + env(safe-area-inset-bottom,0px))}
+  }
+
+  @media(max-width:380px){
+    .nav-logo{letter-spacing:.2em}
+    .hero-eyebrow{font-size:.58rem}
+    .stat-num{font-size:2rem}
+    .why-stats{gap:1.2rem}
+  }
+
+  @media(max-height:520px) and (orientation:landscape){
+    .hero{padding-top:5rem}
+    .hero-logo{width:90px;height:90px;margin-bottom:.5rem}
+    .hero-cta{margin-top:1.5rem}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+    html{scroll-behavior:auto}
+  }
+
+  @media(max-width:768px){
+    .portfolio-grid,.portfolio-row2{gap:1.25rem}
+    .portfolio-row2{margin-top:1.25rem}
+    .portfolio-row2-item:nth-child(2),.portfolio-row2-item:nth-child(3){transition-delay:0s}
+    .cta-buttons{flex-direction:column;align-items:center}
+    .cta-buttons .btn{width:100%;max-width:320px;justify-content:center}
+  }
+</style>
+</head>
+<body>
+
+<!-- ── LOADER ── -->
+<div id="loader">
+  <img src="logo.png" class="loader-logo zv-logo" alt="ZethVorn">
+  <div class="loader-bar-wrap"><div class="loader-bar" id="loaderBar"></div></div>
+  <div class="loader-pct" id="loaderPct">0%</div>
+  <div class="loader-word" id="loaderWord">Initialising</div>
+</div>
+
+<!-- ── CURSOR ── -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<div class="progress-bar" id="progress"></div>
+
+<!-- ── NAV ── -->
+<nav id="nav">
+  <a href="#" class="nav-logo">ZethVorn</a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#services">Services</a></li>
+    <li><a href="#portfolio">Work</a></li>
+    <li><a href="#process">Process</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="https://www.instagram.com/zethvorn/" target="_blank" rel="noopener noreferrer">Instagram</a></li>
+  </ul>
+  <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span><span></span></button>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-bg-lines"></div>
+  <img src="logo.png" class="hero-logo zv-logo" alt="ZethVorn Logo">
+  <p class="hero-eyebrow">Web Design Studio</p>
+  <h1 class="hero-title"><span>Zeth</span><span>Vorn</span></h1>
+  <p class="hero-sub">We craft websites that command attention.</p>
+  <div class="hero-cta">
+    <a href="#contact" class="btn"><span>Start a Project</span></a>
+    <a href="#portfolio" class="btn btn-ghost"><span>View Work</span></a>
+  </div>
+  <div class="hero-scroll"><span>Scroll</span><div class="scroll-line"></div></div>
+</section>
+
+<!-- ── MARQUEE ── -->
+<div class="marquee-section">
+  <div class="marquee-track">
+    <span class="marquee-item">Web Design</span><span class="marquee-item accent">✦</span>
+    <span class="marquee-item">Development</span><span class="marquee-item accent">✦</span>
+    <span class="marquee-item">Branding</span><span class="marquee-item accent">✦</span>
+    <span class="marquee-item">Motion</span><span class="marquee-item accent">✦</span>
+    <span class="marquee-item">Strategy</span><span class="marquee-item accent">✦</span>
+    <span class="marquee-item">Web Design</span><span class="marquee-item accent">✦</span>
+    <span class="marquee-item">Development</span><span class="marquee-item accent">✦</span>
+    <span class="marquee-item">Branding</span><span class="marquee-item accent">✦</span>
+    <span class="marquee-item">Motion</span><span class="marquee-item accent">✦</span>
+    <span class="marquee-item">Strategy</span><span class="marquee-item accent">✦</span>
+    <span class="marquee-item">Web Design</span><span class="marquee-item accent">✦</span>
+    <span class="marquee-item">Development</span><span class="marquee-item accent">✦</span>
+    <span class="marquee-item">Branding</span><span class="marquee-item accent">✦</span>
+    <span class="marquee-item">Motion</span><span class="marquee-item accent">✦</span>
+    <span class="marquee-item">Strategy</span><span class="marquee-item accent">✦</span>
+  </div>
+</div>
+
+<!-- ── SERVICES ── -->
+<section class="services" id="services">
+  <div class="services-header reveal">
+    <div>
+      <p class="section-label">// 01 — Services</p>
+      <h2 class="services-title">What We<br>Build</h2>
+    </div>
+    <p class="services-desc">Every pixel is intentional. Every interaction is earned. We build digital experiences that turn visitors into customers.</p>
+  </div>
+  <div class="services-grid">
+    <div class="service-card reveal"><p class="service-num">01</p><h3 class="service-title-card">Web Design</h3><p class="service-desc">Custom designed websites built from scratch. No templates. No compromises.</p><div class="service-arrow">Learn more</div></div>
+    <div class="service-card reveal" style="transition-delay:.1s"><p class="service-num">02</p><h3 class="service-title-card">Development</h3><p class="service-desc">Fast, responsive, and functional. Flawless on every device, loads in seconds.</p><div class="service-arrow">Learn more</div></div>
+    <div class="service-card reveal" style="transition-delay:.2s"><p class="service-num">03</p><h3 class="service-title-card">Branding</h3><p class="service-desc">Visual identities that are bold, memorable, and built to last.</p><div class="service-arrow">Learn more</div></div>
+    <div class="service-card reveal" style="transition-delay:.3s"><p class="service-num">04</p><h3 class="service-title-card">SEO & Growth</h3><p class="service-desc">Beautiful sites mean nothing if nobody finds them. We fix that.</p><div class="service-arrow">Learn more</div></div>
+    <div class="service-card reveal" style="transition-delay:.4s"><p class="service-num">05</p><h3 class="service-title-card">Animations</h3><p class="service-desc">Smooth, purposeful motion design that brings your site to life.</p><div class="service-arrow">Learn more</div></div>
+    <div class="service-card reveal" style="transition-delay:.5s"><p class="service-num">06</p><h3 class="service-title-card">Maintenance</h3><p class="service-desc">Ongoing support to keep your site fast, secure, and up to date.</p><div class="service-arrow">Learn more</div></div>
+  </div>
+</section>
+
+<!-- ── PORTFOLIO ── -->
+<section class="portfolio" id="portfolio">
+  <div class="portfolio-inner">
+    <div class="portfolio-header reveal">
+      <div>
+        <p class="section-label">// 02 — Selected Work</p>
+        <h2 class="portfolio-title">Our Designs</h2>
+      </div>
+      <span class="portfolio-count">05 Projects</span>
+    </div>
+
+    <!-- big 2-col grid -->
+    <div class="portfolio-grid">
+
+      <!-- Card 1: Luxury fashion site -->
+      <div class="portfolio-item unfold">
+        <div class="portfolio-mockup">
+          <svg viewBox="0 0 700 440" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="700" height="440" fill="#0c0c0c"/>
+            <!-- nav bar -->
+            <rect x="0" y="0" width="700" height="52" fill="#080808"/>
+            <text x="40" y="33" font-family="serif" font-size="14" fill="#888" letter-spacing="4">NOIR</text>
+            <text x="540" y="33" font-family="sans-serif" font-size="9" fill="#444" letter-spacing="3">COLLECTION</text>
+            <text x="610" y="33" font-family="sans-serif" font-size="9" fill="#444" letter-spacing="3">ABOUT</text>
+            <!-- hero image placeholder gradient -->
+            <rect x="0" y="52" width="700" height="280" fill="url(#g1)"/>
+            <defs>
+              <linearGradient id="g1" x1="0" y1="0" x2="700" y2="280" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#1a1a1a"/>
+                <stop offset="100%" stop-color="#050505"/>
+              </linearGradient>
+            </defs>
+            <!-- decorative lines -->
+            <line x1="350" y1="80" x2="350" y2="300" stroke="#1e1e1e" stroke-width="1"/>
+            <circle cx="350" cy="190" r="60" stroke="#1e1e1e" stroke-width="1" fill="none"/>
+            <circle cx="350" cy="190" r="40" stroke="#252525" stroke-width="1" fill="none"/>
+            <!-- big headline -->
+            <text x="350" y="170" font-family="serif" font-size="38" fill="#fff" text-anchor="middle" letter-spacing="8">OBSIDIAN</text>
+            <text x="350" y="205" font-family="serif" font-size="13" fill="#555" text-anchor="middle" letter-spacing="6" font-style="italic">Autumn Collection 2026</text>
+            <!-- cta -->
+            <rect x="285" y="225" width="130" height="34" stroke="#333" stroke-width="1" fill="none"/>
+            <text x="350" y="247" font-family="sans-serif" font-size="8" fill="#888" text-anchor="middle" letter-spacing="4">EXPLORE NOW</text>
+            <!-- product row -->
+            <rect x="40" y="350" width="150" height="70" fill="#0f0f0f" rx="0"/>
+            <rect x="210" y="350" width="150" height="70" fill="#0f0f0f" rx="0"/>
+            <rect x="380" y="350" width="150" height="70" fill="#0f0f0f" rx="0"/>
+            <rect x="550" y="350" width="110" height="70" fill="#0f0f0f" rx="0"/>
+            <text x="115" y="390" font-family="serif" font-size="10" fill="#444" text-anchor="middle">JACKET 001</text>
+            <text x="285" y="390" font-family="serif" font-size="10" fill="#444" text-anchor="middle">COAT 002</text>
+            <text x="455" y="390" font-family="serif" font-size="10" fill="#444" text-anchor="middle">DRESS 003</text>
+          </svg>
+        </div>
+        <div class="portfolio-overlay">
+          <span class="portfolio-tag">Fashion · E-Commerce</span>
+          <div class="portfolio-name">Noir Maison</div>
+          <div class="portfolio-type">Luxury fashion storefront with editorial layout</div>
+        </div>
+      </div>
+
+      <!-- Card 2: Dark agency site (tall) -->
+      <div class="portfolio-item unfold">
+        <div class="portfolio-mockup">
+          <svg viewBox="0 0 700 700" fill="none" xmlns="http://www.w3.org/2000/svg" style="height:100%">
+            <rect width="700" height="700" fill="#050505"/>
+            <!-- grid lines bg -->
+            <line x1="0" y1="100" x2="700" y2="100" stroke="#0f0f0f" stroke-width="1"/>
+            <line x1="0" y1="200" x2="700" y2="200" stroke="#0f0f0f" stroke-width="1"/>
+            <line x1="0" y1="300" x2="700" y2="300" stroke="#0f0f0f" stroke-width="1"/>
+            <line x1="0" y1="400" x2="700" y2="400" stroke="#0f0f0f" stroke-width="1"/>
+            <line x1="0" y1="500" x2="700" y2="500" stroke="#0f0f0f" stroke-width="1"/>
+            <line x1="0" y1="600" x2="700" y2="600" stroke="#0f0f0f" stroke-width="1"/>
+            <line x1="100" y1="0" x2="100" y2="700" stroke="#0f0f0f" stroke-width="1"/>
+            <line x1="200" y1="0" x2="200" y2="700" stroke="#0f0f0f" stroke-width="1"/>
+            <line x1="300" y1="0" x2="300" y2="700" stroke="#0f0f0f" stroke-width="1"/>
+            <line x1="400" y1="0" x2="400" y2="700" stroke="#0f0f0f" stroke-width="1"/>
+            <line x1="500" y1="0" x2="500" y2="700" stroke="#0f0f0f" stroke-width="1"/>
+            <line x1="600" y1="0" x2="600" y2="700" stroke="#0f0f0f" stroke-width="1"/>
+            <!-- nav -->
+            <rect x="0" y="0" width="700" height="56" fill="#000"/>
+            <text x="40" y="35" font-family="sans-serif" font-size="11" fill="#fff" letter-spacing="5">VEKTRIX</text>
+            <circle cx="640" cy="28" r="14" stroke="#222" stroke-width="1" fill="none"/>
+            <text x="640" y="33" font-family="sans-serif" font-size="8" fill="#555" text-anchor="middle">☰</text>
+            <!-- hero text block -->
+            <text x="40" y="130" font-family="serif" font-size="52" fill="#fff" letter-spacing="2">DESIGN</text>
+            <text x="40" y="185" font-family="serif" font-size="52" fill="transparent" stroke="#222" stroke-width="1" letter-spacing="2">BEYOND</text>
+            <text x="40" y="240" font-family="serif" font-size="52" fill="#fff" letter-spacing="2">LIMITS.</text>
+            <rect x="40" y="265" width="80" height="1" fill="#333"/>
+            <text x="40" y="295" font-family="sans-serif" font-size="9" fill="#555" letter-spacing="3">CREATIVE STUDIO · EST 2022</text>
+            <!-- floating card -->
+            <rect x="380" y="100" width="260" height="200" fill="#0d0d0d" stroke="#1a1a1a" stroke-width="1"/>
+            <text x="400" y="130" font-family="sans-serif" font-size="8" fill="#444" letter-spacing="3">FEATURED</text>
+            <rect x="400" y="145" width="220" height="90" fill="#111"/>
+            <text x="510" y="200" font-family="serif" font-size="20" fill="#333" text-anchor="middle">✦</text>
+            <text x="400" y="260" font-family="serif" font-size="12" fill="#666">Vektrix Agency Site</text>
+            <text x="400" y="278" font-family="sans-serif" font-size="8" fill="#333" letter-spacing="2">2026</text>
+            <!-- stats row -->
+            <rect x="0" y="320" width="700" height="120" fill="#080808"/>
+            <text x="80" y="370" font-family="serif" font-size="28" fill="#fff" text-anchor="middle">47+</text>
+            <text x="80" y="395" font-family="sans-serif" font-size="8" fill="#444" text-anchor="middle" letter-spacing="2">PROJECTS</text>
+            <line x1="160" y1="340" x2="160" y2="420" stroke="#111" stroke-width="1"/>
+            <text x="250" y="370" font-family="serif" font-size="28" fill="#fff" text-anchor="middle">100%</text>
+            <text x="250" y="395" font-family="sans-serif" font-size="8" fill="#444" text-anchor="middle" letter-spacing="2">CUSTOM</text>
+            <line x1="340" y1="340" x2="340" y2="420" stroke="#111" stroke-width="1"/>
+            <text x="440" y="370" font-family="serif" font-size="28" fill="#fff" text-anchor="middle">7d</text>
+            <text x="440" y="395" font-family="sans-serif" font-size="8" fill="#444" text-anchor="middle" letter-spacing="2">AVG DELIVERY</text>
+            <line x1="530" y1="340" x2="530" y2="420" stroke="#111" stroke-width="1"/>
+            <text x="615" y="370" font-family="serif" font-size="28" fill="#fff" text-anchor="middle">∞</text>
+            <text x="615" y="395" font-family="sans-serif" font-size="8" fill="#444" text-anchor="middle" letter-spacing="2">REVISIONS</text>
+            <!-- service cards -->
+            <rect x="40" y="460" width="180" height="100" fill="#0c0c0c" stroke="#111" stroke-width="1"/>
+            <text x="60" y="490" font-family="sans-serif" font-size="8" fill="#333" letter-spacing="2">01</text>
+            <text x="60" y="515" font-family="serif" font-size="16" fill="#666">Design</text>
+            <rect x="240" y="460" width="180" height="100" fill="#0c0c0c" stroke="#111" stroke-width="1"/>
+            <text x="260" y="490" font-family="sans-serif" font-size="8" fill="#333" letter-spacing="2">02</text>
+            <text x="260" y="515" font-family="serif" font-size="16" fill="#666">Develop</text>
+            <rect x="440" y="460" width="220" height="100" fill="#0c0c0c" stroke="#111" stroke-width="1"/>
+            <text x="460" y="490" font-family="sans-serif" font-size="8" fill="#333" letter-spacing="2">03</text>
+            <text x="460" y="515" font-family="serif" font-size="16" fill="#666">Launch</text>
+            <!-- bottom footer bar -->
+            <rect x="0" y="660" width="700" height="40" fill="#000"/>
+            <text x="40" y="685" font-family="sans-serif" font-size="7" fill="#333" letter-spacing="3">© 2026 VEKTRIX STUDIO</text>
+            <text x="580" y="685" font-family="sans-serif" font-size="7" fill="#333" letter-spacing="2">↑ TOP</text>
+          </svg>
+        </div>
+        <div class="portfolio-overlay">
+          <span class="portfolio-tag">Agency · Portfolio</span>
+          <div class="portfolio-name">Vektrix Studio</div>
+          <div class="portfolio-type">Full agency site with grid-based layout</div>
+        </div>
+      </div>
+
+      <!-- Card 3: Fitness / dark app landing -->
+      <div class="portfolio-item unfold">
+        <div class="portfolio-mockup">
+          <svg viewBox="0 0 700 440" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="700" height="440" fill="#060606"/>
+            <defs>
+              <linearGradient id="g3" x1="0" y1="0" x2="700" y2="440" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#141414"/>
+                <stop offset="100%" stop-color="#080808"/>
+              </linearGradient>
+            </defs>
+            <rect width="700" height="440" fill="url(#g3)"/>
+            <!-- nav -->
+            <rect x="0" y="0" width="700" height="50" fill="rgba(0,0,0,0.6)"/>
+            <text x="40" y="32" font-family="sans-serif" font-size="13" fill="#fff" letter-spacing="4">FORGE</text>
+            <text x="540" y="32" font-family="sans-serif" font-size="8" fill="#555" letter-spacing="3">TRAINING</text>
+            <text x="600" y="32" font-family="sans-serif" font-size="8" fill="#555" letter-spacing="3">PLANS</text>
+            <rect x="650" y="18" width="40" height="22" fill="#fff" rx="0"/>
+            <text x="670" y="33" font-family="sans-serif" font-size="7" fill="#000" text-anchor="middle" letter-spacing="1">JOIN</text>
+            <!-- big diagonal slash -->
+            <line x1="0" y1="440" x2="500" y2="60" stroke="#111" stroke-width="1"/>
+            <line x1="100" y1="440" x2="600" y2="60" stroke="#0e0e0e" stroke-width="1"/>
+            <!-- headline -->
+            <text x="40" y="140" font-family="sans-serif" font-size="48" fill="#fff" letter-spacing="-1" font-weight="700">BUILD</text>
+            <text x="40" y="192" font-family="sans-serif" font-size="48" fill="transparent" stroke="#222" stroke-width="1" letter-spacing="-1">YOUR</text>
+            <text x="40" y="244" font-family="sans-serif" font-size="48" fill="#fff" letter-spacing="-1" font-weight="700">LEGACY.</text>
+            <!-- phone mockup -->
+            <rect x="460" y="70" width="180" height="320" rx="18" stroke="#1e1e1e" stroke-width="2" fill="#0a0a0a"/>
+            <rect x="472" y="82" width="156" height="296" rx="12" fill="#111"/>
+            <text x="550" y="200" font-family="sans-serif" font-size="28" fill="#222" text-anchor="middle" font-weight="700">FORGE</text>
+            <rect x="492" y="230" width="116" height="28" fill="#fff" rx="2"/>
+            <text x="550" y="249" font-family="sans-serif" font-size="8" fill="#000" text-anchor="middle" letter-spacing="2">GET STARTED</text>
+            <rect x="492" y="268" width="50" height="50" fill="#0e0e0e" rx="4"/>
+            <rect x="554" y="268" width="50" height="50" fill="#0e0e0e" rx="4"/>
+            <text x="517" y="299" font-family="sans-serif" font-size="18" fill="#333" text-anchor="middle">▲</text>
+            <text x="579" y="299" font-family="sans-serif" font-size="18" fill="#333" text-anchor="middle">◆</text>
+            <!-- stats below headline -->
+            <text x="40" y="290" font-family="sans-serif" font-size="8" fill="#444" letter-spacing="3">10K+ MEMBERS</text>
+            <text x="40" y="310" font-family="sans-serif" font-size="8" fill="#444" letter-spacing="3">500+ WORKOUTS</text>
+            <!-- bottom bar -->
+            <rect x="0" y="390" width="700" height="50" fill="#040404"/>
+            <text x="40" y="420" font-family="sans-serif" font-size="7" fill="#333" letter-spacing="3">TRAINING · NUTRITION · COMMUNITY</text>
+          </svg>
+        </div>
+        <div class="portfolio-overlay">
+          <span class="portfolio-tag">Fitness · App Landing</span>
+          <div class="portfolio-name">Forge App</div>
+          <div class="portfolio-type">High-energy landing page with app showcase</div>
+        </div>
+      </div>
+
+    </div><!-- /portfolio-grid -->
+
+    <!-- Row 2: 3 smaller cards -->
+    <div class="portfolio-row2">
+
+      <!-- Card 4: Restaurant -->
+      <div class="portfolio-row2-item unfold">
+        <div class="portfolio-mockup">
+          <svg viewBox="0 0 500 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="380" fill="#080808"/>
+            <defs>
+              <radialGradient id="g4" cx="50%" cy="40%" r="50%">
+                <stop offset="0%" stop-color="#1a1410"/>
+                <stop offset="100%" stop-color="#050505"/>
+              </radialGradient>
+            </defs>
+            <rect width="500" height="380" fill="url(#g4)"/>
+            <!-- top label -->
+            <text x="250" y="50" font-family="serif" font-size="8" fill="#555" text-anchor="middle" letter-spacing="5">EST. 2019</text>
+            <!-- big restaurant name -->
+            <text x="250" y="110" font-family="serif" font-size="44" fill="#c8a96e" text-anchor="middle" letter-spacing="3">SOLÈNE</text>
+            <text x="250" y="135" font-family="serif" font-size="10" fill="#555" text-anchor="middle" letter-spacing="6" font-style="italic">Fine Dining · Sydney</text>
+            <!-- divider ornament -->
+            <line x1="120" y1="152" x2="220" y2="152" stroke="#2a2218" stroke-width="1"/>
+            <text x="250" y="157" font-family="serif" font-size="10" fill="#3a3020" text-anchor="middle">◆</text>
+            <line x1="280" y1="152" x2="380" y2="152" stroke="#2a2218" stroke-width="1"/>
+            <!-- menu items -->
+            <text x="100" y="195" font-family="serif" font-size="12" fill="#7a6a50">Pan-Seared Duck</text>
+            <text x="100" y="212" font-family="sans-serif" font-size="7" fill="#3a3020" letter-spacing="2">MAINS · $58</text>
+            <text x="300" y="195" font-family="serif" font-size="12" fill="#7a6a50">Truffle Risotto</text>
+            <text x="300" y="212" font-family="sans-serif" font-size="7" fill="#3a3020" letter-spacing="2">MAINS · $52</text>
+            <text x="100" y="245" font-family="serif" font-size="12" fill="#7a6a50">Wagyu Tenderloin</text>
+            <text x="100" y="262" font-family="sans-serif" font-size="7" fill="#3a3020" letter-spacing="2">MAINS · $95</text>
+            <text x="300" y="245" font-family="serif" font-size="12" fill="#7a6a50">Lobster Bisque</text>
+            <text x="300" y="262" font-family="sans-serif" font-size="7" fill="#3a3020" letter-spacing="2">STARTER · $34</text>
+            <!-- cta -->
+            <rect x="160" y="295" width="180" height="36" stroke="#3a3020" stroke-width="1" fill="none"/>
+            <text x="250" y="318" font-family="sans-serif" font-size="8" fill="#7a6a50" text-anchor="middle" letter-spacing="4">RESERVE A TABLE</text>
+          </svg>
+        </div>
+        <div class="portfolio-overlay">
+          <span class="portfolio-tag">Restaurant · Hospitality</span>
+          <div class="portfolio-name">Solène Dining</div>
+          <div class="portfolio-type">Elegant fine dining website with reservations</div>
+        </div>
+      </div>
+
+      <!-- Card 5: SaaS / Tech -->
+      <div class="portfolio-row2-item unfold">
+        <div class="portfolio-mockup">
+          <svg viewBox="0 0 500 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="380" fill="#040408"/>
+            <!-- grid dots -->
+            <pattern id="dots" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+              <circle cx="15" cy="15" r="1" fill="#0f0f18"/>
+            </pattern>
+            <rect width="500" height="380" fill="url(#dots)"/>
+            <!-- nav -->
+            <rect width="500" height="48" fill="#020204"/>
+            <text x="30" y="30" font-family="sans-serif" font-size="11" fill="#8888ff" letter-spacing="2">◈ AXIOM</text>
+            <text x="360" y="30" font-family="sans-serif" font-size="8" fill="#444" letter-spacing="2">PRICING</text>
+            <text x="420" y="30" font-family="sans-serif" font-size="8" fill="#444" letter-spacing="2">DOCS</text>
+            <rect x="455" y="15" width="36" height="20" fill="#6666ee" rx="2"/>
+            <text x="473" y="29" font-family="sans-serif" font-size="7" fill="#fff" text-anchor="middle">TRY</text>
+            <!-- hero headline -->
+            <text x="250" y="120" font-family="sans-serif" font-size="32" fill="#fff" text-anchor="middle" font-weight="700">Ship Faster.</text>
+            <text x="250" y="158" font-family="sans-serif" font-size="32" fill="#555" text-anchor="middle" font-weight="700">Scale Smarter.</text>
+            <text x="250" y="190" font-family="sans-serif" font-size="10" fill="#444" text-anchor="middle" letter-spacing="1">The all-in-one platform for modern teams.</text>
+            <!-- cta buttons -->
+            <rect x="120" y="210" width="120" height="32" fill="#6666ee" rx="3"/>
+            <text x="180" y="231" font-family="sans-serif" font-size="8" fill="#fff" text-anchor="middle" letter-spacing="1">Get Started Free</text>
+            <rect x="258" y="210" width="120" height="32" fill="none" stroke="#222" stroke-width="1" rx="3"/>
+            <text x="318" y="231" font-family="sans-serif" font-size="8" fill="#555" text-anchor="middle" letter-spacing="1">View Demo →</text>
+            <!-- dashboard mockup -->
+            <rect x="60" y="265" width="380" height="100" fill="#08080f" stroke="#111" stroke-width="1" rx="4"/>
+            <rect x="70" y="275" width="80" height="8" fill="#111" rx="2"/>
+            <rect x="70" y="292" width="360" height="1" fill="#111"/>
+            <rect x="70" y="302" width="55" height="50" fill="#0d0d16" rx="2"/>
+            <rect x="134" y="302" width="55" height="50" fill="#0d0d16" rx="2"/>
+            <rect x="198" y="302" width="55" height="50" fill="#0d0d16" rx="2"/>
+            <rect x="262" y="302" width="55" height="50" fill="#0d0d16" rx="2"/>
+            <rect x="326" y="302" width="55" height="50" fill="#0d0d16" rx="2"/>
+            <text x="97" y="332" font-family="sans-serif" font-size="14" fill="#6666ee" text-anchor="middle">92%</text>
+            <text x="161" y="332" font-family="sans-serif" font-size="14" fill="#888" text-anchor="middle">47k</text>
+            <text x="225" y="332" font-family="sans-serif" font-size="14" fill="#888" text-anchor="middle">$12k</text>
+          </svg>
+        </div>
+        <div class="portfolio-overlay">
+          <span class="portfolio-tag">SaaS · Technology</span>
+          <div class="portfolio-name">Axiom Platform</div>
+          <div class="portfolio-type">SaaS product landing with dashboard preview</div>
+        </div>
+      </div>
+
+      <!-- Card 6: Barber/Salon -->
+      <div class="portfolio-row2-item unfold">
+        <div class="portfolio-mockup">
+          <svg viewBox="0 0 500 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="500" height="380" fill="#070707"/>
+            <!-- diagonal split -->
+            <polygon points="0,0 280,0 180,380 0,380" fill="#0b0b0b"/>
+            <!-- nav -->
+            <text x="30" y="40" font-family="serif" font-size="13" fill="#fff" letter-spacing="6">BLADE</text>
+            <text x="30" y="56" font-family="sans-serif" font-size="7" fill="#444" letter-spacing="4">BARBERSHOP</text>
+            <text x="360" y="40" font-family="sans-serif" font-size="8" fill="#444" letter-spacing="2">SERVICES</text>
+            <text x="430" y="40" font-family="sans-serif" font-size="8" fill="#444" letter-spacing="2">BOOK</text>
+            <!-- hero text -->
+            <text x="30" y="130" font-family="serif" font-size="36" fill="#fff" letter-spacing="1">THE ART</text>
+            <text x="30" y="170" font-family="serif" font-size="36" fill="#fff" letter-spacing="1">OF THE</text>
+            <text x="30" y="210" font-family="serif" font-size="36" fill="#fff" letter-spacing="1">PERFECT</text>
+            <text x="30" y="250" font-family="serif" font-size="36" fill="#aaa" letter-spacing="1">CUT.</text>
+            <!-- book button -->
+            <rect x="30" y="275" width="140" height="38" fill="#fff" rx="0"/>
+            <text x="100" y="299" font-family="sans-serif" font-size="8" fill="#000" text-anchor="middle" letter-spacing="3">BOOK NOW</text>
+            <!-- right side services -->
+            <line x1="310" y1="80" x2="480" y2="80" stroke="#111" stroke-width="1"/>
+            <text x="310" y="110" font-family="sans-serif" font-size="8" fill="#333" letter-spacing="3">SERVICES</text>
+            <text x="310" y="145" font-family="serif" font-size="14" fill="#666">Skin Fade</text>
+            <text x="450" y="145" font-family="sans-serif" font-size="10" fill="#333" text-anchor="end">$45</text>
+            <line x1="310" y1="155" x2="480" y2="155" stroke="#111" stroke-width="1"/>
+            <text x="310" y="185" font-family="serif" font-size="14" fill="#666">Beard Trim</text>
+            <text x="450" y="185" font-family="sans-serif" font-size="10" fill="#333" text-anchor="end">$25</text>
+            <line x1="310" y1="195" x2="480" y2="195" stroke="#111" stroke-width="1"/>
+            <text x="310" y="225" font-family="serif" font-size="14" fill="#666">Full Groom</text>
+            <text x="450" y="225" font-family="sans-serif" font-size="10" fill="#333" text-anchor="end">$65</text>
+            <line x1="310" y1="235" x2="480" y2="235" stroke="#111" stroke-width="1"/>
+            <text x="310" y="265" font-family="serif" font-size="14" fill="#666">Hot Towel</text>
+            <text x="450" y="265" font-family="sans-serif" font-size="10" fill="#333" text-anchor="end">$30</text>
+            <line x1="310" y1="275" x2="480" y2="275" stroke="#111" stroke-width="1"/>
+            <!-- testimonial -->
+            <rect x="300" y="295" width="190" height="70" fill="#0a0a0a" stroke="#111" stroke-width="1"/>
+            <text x="315" y="316" font-family="serif" font-size="9" fill="#555" font-style="italic">"Best cut I've ever had."</text>
+            <text x="315" y="340" font-family="sans-serif" font-size="7" fill="#333" letter-spacing="2">— JAMES T.</text>
+            <text x="315" y="355" font-family="sans-serif" font-size="7" fill="#c8a800">★★★★★</text>
+          </svg>
+        </div>
+        <div class="portfolio-overlay">
+          <span class="portfolio-tag">Barbershop · Local Business</span>
+          <div class="portfolio-name">Blade Barbershop</div>
+          <div class="portfolio-type">Clean local business site with booking system</div>
+        </div>
+      </div>
+
+    </div><!-- /row2 -->
+  </div>
+</section>
+
+<!-- ── PROCESS ── -->
+<section class="process" id="process">
+  <div class="process-inner">
+    <div class="process-header reveal">
+      <p class="section-label">// 03 — Process</p>
+      <h2 class="process-title">How It Works</h2>
+    </div>
+    <div class="process-steps">
+      <div class="process-step reveal"><div class="process-step-num">01</div><div class="process-step-title">Discovery</div><p class="process-step-desc">We learn your business, your goals, and your customers. No guessing — just clarity from day one.</p></div>
+      <div class="process-step reveal" style="transition-delay:.1s"><div class="process-step-num">02</div><div class="process-step-title">Design</div><p class="process-step-desc">We craft a visual direction that fits your brand. You review, we refine. Simple as that.</p></div>
+      <div class="process-step reveal" style="transition-delay:.2s"><div class="process-step-num">03</div><div class="process-step-title">Build</div><p class="process-step-desc">We build your site with clean code, fast loading, and smooth animations baked in.</p></div>
+      <div class="process-step reveal" style="transition-delay:.3s"><div class="process-step-num">04</div><div class="process-step-title">Launch</div><p class="process-step-desc">Your site goes live. We handle everything — hosting, domain, testing. You just sit back.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── WHY ── -->
+<section class="why">
+  <div class="why-grid">
+    <div class="reveal">
+      <p class="section-label">// 04 — Why ZethVorn</p>
+      <h2 class="why-title">Built Different</h2>
+      <p class="why-text">We're not an agency with 50 people and slow timelines. We're a focused studio that moves fast, communicates clearly, and delivers work that makes you proud.</p>
+      <div class="why-stats">
+        <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Custom Built</div></div>
+        <div class="stat"><div class="stat-num">7 Day</div><div class="stat-label">Avg Turnaround</div></div>
+        <div class="stat"><div class="stat-num">∞</div><div class="stat-label">Revisions</div></div>
+        <div class="stat"><div class="stat-num">24/7</div><div class="stat-label">Support</div></div>
+      </div>
+    </div>
+    <div class="why-visual reveal">
+      <div class="why-visual-ring"></div>
+      <div class="why-visual-ring"></div>
+      <div class="why-visual-ring"></div>
+      <div class="why-visual-center">
+        <img src="logo.png" class="why-logo zv-logo" alt="ZethVorn">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<section class="cta-section" id="contact">
+  <p class="cta-label reveal">// 05 — Contact</p>
+  <h2 class="cta-title reveal">Ready to<br>Stand Out?</h2>
+  <p class="cta-sub reveal">Let's build something worth remembering.</p>
+  <div class="cta-buttons reveal"><a href="mailto:Zethvorn@gmail.com" class="btn"><span>Get in Touch</span></a><a href="https://www.instagram.com/zethvorn/" class="btn btn-ghost btn-ig" target="_blank" rel="noopener noreferrer" aria-label="Message ZethVorn on Instagram"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".9" fill="currentColor" stroke="none"/></svg>DM on Instagram</span></a></div>
+  <a href="mailto:Zethvorn@gmail.com" class="cta-email reveal">Zethvorn@gmail.com</a>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-logo">ZethVorn</div>
+  <p class="footer-copy">© 2026 ZethVorn. All rights reserved.</p>
+  <a href="mailto:Zethvorn@gmail.com" class="footer-email">Zethvorn@gmail.com</a>
+  <a href="https://www.instagram.com/zethvorn/" class="footer-email" target="_blank" rel="noopener noreferrer">Instagram</a>
+</footer>
+
+<script>
+  /* ── LOGO FALLBACK ──
+     Put your logo next to this file as "logo.png" and it will be used.
+     If the file is missing, this built-in mark shows instead. */
+  const ZV_MARK = 'data:image/svg+xml,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="square" stroke-linejoin="miter">' +
+    '<circle cx="50" cy="50" r="46" stroke-width="1.5" opacity=".6"/>' +
+    '<path d="M28 32H72L28 68H72"/></svg>');
+  document.querySelectorAll('img.zv-logo').forEach(img => {
+    img.addEventListener('error', () => { if (img.src !== ZV_MARK) img.src = ZV_MARK; }, { once:true });
+    if (img.complete && img.naturalWidth === 0) img.src = ZV_MARK;
+  });
+
+  /* ── MOBILE MENU ── */
+  const navEl = document.getElementById('nav');
+  const navBtn = document.getElementById('navToggle');
+  function setMenu(open){
+    navEl.classList.toggle('open', open);
+    document.body.classList.toggle('menu-lock', open);
+    navBtn.setAttribute('aria-expanded', open);
+    navBtn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  }
+  navBtn.addEventListener('click', () => setMenu(!navEl.classList.contains('open')));
+  document.querySelectorAll('#navLinks a').forEach(a => a.addEventListener('click', () => setMenu(false)));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') setMenu(false); });
+  window.addEventListener('resize', () => { if (window.innerWidth > 768) setMenu(false); });
+
+
+  /* ── NAV: hide on scroll down, reveal on scroll up ── */
+  let lastY = window.scrollY;
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY;
+    navEl.classList.toggle('scrolled', y > 40);
+    if (navEl.classList.contains('open')) { lastY = y; return; }
+    if (y > lastY && y > 120) navEl.classList.add('nav-hidden');
+    else if (y < lastY) navEl.classList.remove('nav-hidden');
+    lastY = y;
+  }, { passive:true });
+
+  /* ── LOADER ── */
+  const loaderEl  = document.getElementById('loader');
+  const barEl     = document.getElementById('loaderBar');
+  const pctEl     = document.getElementById('loaderPct');
+  const wordEl    = document.getElementById('loaderWord');
+
+  const words = ['Initialising','Loading Assets','Crafting UI','Animating','Polishing','Almost There','Welcome'];
+  let progress = 0;
+  let wordIdx  = 0;
+
+  const interval = setInterval(() => {
+    progress += Math.random() * 14 + 3;
+    if (progress >= 100) { progress = 100; clearInterval(interval); }
+
+    barEl.style.width   = progress + '%';
+    pctEl.textContent   = Math.floor(progress) + '%';
+
+    const wIdx = Math.min(Math.floor(progress / (100 / words.length)), words.length - 1);
+    if (wIdx !== wordIdx) { wordIdx = wIdx; wordEl.textContent = words[wordIdx]; }
+
+    if (progress >= 100) {
+      setTimeout(() => {
+        loaderEl.classList.add('hide');
+        document.body.style.overflow = 'auto';
+      }, 400);
+    }
+  }, 80);
+
+  document.body.style.overflow = 'hidden';
+
+  /* ── CURSOR ── */
+  const cursor = document.getElementById('cursor');
+  const ring   = document.getElementById('cursorRing');
+  let mX=0,mY=0,rX=0,rY=0;
+  document.addEventListener('mousemove',e=>{ mX=e.clientX; mY=e.clientY; cursor.style.left=mX+'px'; cursor.style.top=mY+'px'; });
+  const isTouch = window.matchMedia('(hover:none), (pointer:coarse)').matches;
+  if (!isTouch) (function loop(){ rX+=(mX-rX)*.12; rY+=(mY-rY)*.12; ring.style.left=rX+'px'; ring.style.top=rY+'px'; requestAnimationFrame(loop); })();
+  document.querySelectorAll('a,button,.service-card,.portfolio-item,.portfolio-row2-item').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{ cursor.style.width='16px'; cursor.style.height='16px'; ring.style.width='60px'; ring.style.height='60px'; });
+    el.addEventListener('mouseleave',()=>{ cursor.style.width='8px'; cursor.style.height='8px'; ring.style.width='36px'; ring.style.height='36px'; });
+  });
+
+  /* ── SCROLL REVEAL ── */
+  const obs = new IntersectionObserver(entries=>{
+    entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
+  },{threshold:.08,rootMargin:'0px 0px -40px 0px'});
+  document.querySelectorAll('.reveal, .unfold').forEach(el=>obs.observe(el));
+
+  /* ── SCROLL PROGRESS BAR ── */
+  const progEl = document.getElementById('progress');
+  let progTick = false;
+  window.addEventListener('scroll', () => {
+    if (progTick) return; progTick = true;
+    requestAnimationFrame(() => {
+      const h = document.documentElement.scrollHeight - innerHeight;
+      progEl.style.transform = 'scaleX(' + (h > 0 ? scrollY / h : 0) + ')';
+      progTick = false;
+    });
+  }, { passive:true });
+
+  /* ── STAT COUNT-UP (runs once per stat) ── */
+  const reduceMotion = matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const statObs = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (!en.isIntersecting) return;
+      statObs.unobserve(en.target);
+      const el = en.target, m = el.textContent.trim().match(/^(\d+)(.*)$/);
+      if (!m || reduceMotion) return;
+      const end = +m[1], tail = m[2], t0 = performance.now(), dur = 1200;
+      (function step(t){
+        const k = Math.min((t - t0) / dur, 1), eased = 1 - Math.pow(1 - k, 3);
+        el.textContent = Math.round(end * eased) + tail;
+        if (k < 1) requestAnimationFrame(step);
+      })(t0);
+    });
+  }, { threshold:.6 });
+  document.querySelectorAll('.stat-num').forEach(el => statObs.observe(el));
+
+  /* ── FAILSAFE: never leave projects hidden ── */
+  function unfoldCheck(){
+    document.querySelectorAll('.unfold:not(.visible)').forEach(el => {
+      if (el.getBoundingClientRect().top < innerHeight * 0.92) el.classList.add('visible');
+    });
+  }
+  addEventListener('scroll', unfoldCheck, { passive:true });
+  addEventListener('load', () => setTimeout(unfoldCheck, 600));
+</script>
+</body>
+</html>
